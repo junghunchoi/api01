@@ -3,10 +3,7 @@ package com.example.api01.config;
 
 import com.example.api01.security.APIUserDetailsService;
 import com.example.api01.security.filter.APILoginFilter;
-import com.example.api01.security.filter.RefreshTokenFilter;
-import com.example.api01.security.filter.TokenCheckFilter;
 import com.example.api01.security.handler.APILoginSuccessHandler;
-import com.example.api01.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -33,25 +30,26 @@ public class CustomSecurityConfig {
 
     //주입필요
     private final APIUserDetailsService apiUserDetailsService;
-    private final JWTUtil jwtUtil;
 
 
     // 로그인 화면에서 로그인을 진행한다. 설정을 통해 사용자가 접근을 제어한다.
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
 
+
         //csrf란 보안기술이 있는데 이를 처리하기 위한 과정이 복잡하므로 disable처리한다.
         http.csrf().disable();
 
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
+
         //API 설정 시작
         // AuthenticationManager 설정
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
-            AuthenticationManagerBuilder.class);
+                AuthenticationManagerBuilder.class);
 
         authenticationManagerBuilder.userDetailsService(apiUserDetailsService)
-                                    .passwordEncoder(passwordEncoder());
+                .passwordEncoder(passwordEncoder());
 
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
@@ -60,19 +58,12 @@ public class CustomSecurityConfig {
         APILoginFilter apiLoginFilter = new APILoginFilter("/generateToken");
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
-        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtil);
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler();
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
 
         //APILoginFilter의 위치 재조정
         http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
-        //
-
-        // api로 시작하는 모든 경로는 TokenCheckFilter 동작
-        http.addFilterBefore(tokenCheckFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
-
-        http.addFilterBefore(new RefreshTokenFilter("/refreshToken", jwtUtil),
-            TokenCheckFilter.class);
 
         return http.build();
     }
@@ -83,7 +74,7 @@ public class CustomSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
 
         return (web -> web.ignoring()
-                          .requestMatchers(PathRequest.toStaticResources().atCommonLocations()));
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()));
 
 
     }
@@ -95,9 +86,6 @@ public class CustomSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil) {
-        return new TokenCheckFilter(jwtUtil);
-    }
 
 }
 

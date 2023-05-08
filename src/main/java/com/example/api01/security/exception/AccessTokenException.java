@@ -53,7 +53,7 @@ public class AccessTokenException extends RuntimeException{
         String reponseStr = gson.toJson(Map.of("msg", token_error.getMsg(), "time", new Date()));
 
         try {
-            response.getWriter().println(reponseStr);
+            response.getWriter().println("reponseStr : " + reponseStr);
         } catch (IOException E) {
             throw new RuntimeException();
         }

@@ -36,6 +36,7 @@ public class TokenCheckFilter extends OncePerRequestFilter { //OncePerRequestFil
         log.info("Token Check Filter ....");
         log.info("JWTUtil : " + jwtUtil);
 
+        // try에서 에러 객체를 생성하고 처리하는거구만
         try {
             validateAccessToken(request);
             filterChain.doFilter(request, response);
