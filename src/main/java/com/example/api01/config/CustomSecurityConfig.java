@@ -3,7 +3,11 @@ package com.example.api01.config;
 
 import com.example.api01.security.APIUserDetailsService;
 import com.example.api01.security.filter.APILoginFilter;
+import com.example.api01.security.filter.RefreshTokenFilter;
+import com.example.api01.security.filter.TokenCheckFilter;
 import com.example.api01.security.handler.APILoginSuccessHandler;
+import com.example.api01.util.JWTUtil;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -20,6 +24,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Log4j2
 @Configuration
@@ -30,6 +37,7 @@ public class CustomSecurityConfig {
 
     //주입필요
     private final APIUserDetailsService apiUserDetailsService;
+    private final JWTUtil jwtUtil;
 
 
     // 로그인 화면에서 로그인을 진행한다. 설정을 통해 사용자가 접근을 제어한다.
@@ -41,6 +49,11 @@ public class CustomSecurityConfig {
         http.csrf().disable();
 
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+        //cors를 설정
+        http.cors(httpSecurityCorsConfigurer ->{
+            httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource());
+        });
 
 
         //API 설정 시작
@@ -58,14 +71,36 @@ public class CustomSecurityConfig {
         APILoginFilter apiLoginFilter = new APILoginFilter("/generateToken");
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
-        APILoginSuccessHandler successHandler = new APILoginSuccessHandler();
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtil);
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
 
         //APILoginFilter의 위치 재조정
         http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
+        //api로 시작하는 모든 경로는 TokenCheckFilter 동작
+        http.addFilterBefore(tokenCheckFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+
+        //refreshToken 호출 처리
+        http.addFilterBefore(new RefreshTokenFilter("/refreshToken", jwtUtil),
+            TokenCheckFilter.class);
 
         return http.build();
+    }
+
+    // CORS를 위한 bean 설정
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("HEAD","GET","POST","PUT","DELETE"));
+
+        configuration.setAllowedHeaders(Arrays.asList("Authorization","Cache-control","Content-Type"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**",configuration);
+        return source;
+
     }
 
 
@@ -75,8 +110,6 @@ public class CustomSecurityConfig {
 
         return (web -> web.ignoring()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()));
-
-
     }
 
 
@@ -84,6 +117,10 @@ public class CustomSecurityConfig {
     public PasswordEncoder passwordEncoder() {
 
         return new BCryptPasswordEncoder();
+    }
+
+    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil) {
+        return new TokenCheckFilter(jwtUtil);
     }
 
 

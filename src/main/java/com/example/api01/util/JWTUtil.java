@@ -20,7 +20,7 @@ public class JWTUtil {
     private String key;
 
     public String generateToken(Map<String, Object> valueMap, int days) {
-        log.info("generateKey ..."+ key);
+
 
         //헤더부분
         Map<String, Object> headers = new HashMap<>();

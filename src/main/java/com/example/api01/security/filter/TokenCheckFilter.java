@@ -34,7 +34,6 @@ public class TokenCheckFilter extends OncePerRequestFilter { //OncePerRequestFil
         }
 
         log.info("Token Check Filter ....");
-        log.info("JWTUtil : " + jwtUtil);
 
         // try에서 에러 객체를 생성하고 처리하는거구만
         try {
@@ -65,6 +64,7 @@ public class TokenCheckFilter extends OncePerRequestFilter { //OncePerRequestFil
             Map<String, Object> values = jwtUtil.validToken(tokenStr);
 
             return values;
+
         } catch (MalformedJwtException malformedJwtException) {
             log.error("MalformedJwtException..");
             throw new AccessTokenException(TOKEN_ERROR.MALFORM);
