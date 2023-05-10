@@ -19,6 +19,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@ToString
 @Table(name = "tbl_todo_api")
 public class Todo {
 

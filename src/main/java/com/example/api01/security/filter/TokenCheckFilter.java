@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Log4j2
@@ -34,6 +35,7 @@ public class TokenCheckFilter extends OncePerRequestFilter { //OncePerRequestFil
         }
 
         log.info("Token Check Filter ....");
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         // try에서 에러 객체를 생성하고 처리하는거구만
         try {

@@ -32,7 +32,7 @@ public class JWTUtil {
         payloads.putAll(valueMap);
 
         //테스트시에는 짧은 유효기간
-        int time = (1) * days;// 테스트는 분단위로 나중에 60*24 (일)단위로 변경
+        int time = (10) * days;// 테스트는 분단위로 나중에 60*24 (일)단위로 변경
 
         String jwtStr = Jwts.builder()
                             .setHeader(headers)
